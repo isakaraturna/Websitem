@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Çarpan & Katlar — Neon Sprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1020;--primary:#8a7dff;--accent:#00ffc6;--danger:#ff4d6d;
+      --text:#e9ecff;--muted:#9aa4d6;--glow:0 0 25px rgba(138,125,255,.45),0 0 55px rgba(0,255,198,.15);
+    }
+    body{margin:0;font-family:Poppins,system-ui;color:var(--text);background:#0a0f1f}
+    .wrap{max-width:1000px;margin:0 auto;padding:22px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;
+      background:radial-gradient(80% 80% at 50% 30%, var(--primary), #4d3fff);
+      color:#fff;font-family:Orbitron;font-size:22px;box-shadow:var(--glow)}
+    h1{margin:0;font-size:clamp(20px,4vw,32px)}
+    .sub{color:var(--muted);font-size:14px}
+    .teacher{text-align:right}
+    .teacher .role{font-size:13px;color:var(--muted);font-weight:700}
+    .teacher .name{font-size:16px;font-weight:800;color:var(--accent)}
+    .btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),#6effff);color:#061421}
+    .btn.ghost{background:#1b224b;color:#b9c3ff}
+    .panel{background:#111633;border-radius:18px;padding:16px;box-shadow:var(--glow)}
+    .grid-hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0 18px}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#151c45;color:#aeb8ff;font-weight:700;font-size:12px}
+    .big{font-family:Orbitron;font-weight:800;font-size:48px;text-align:center}
+    .options{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px}
+    .opt{border:none;border-radius:16px;padding:22px;cursor:pointer;font-family:Orbitron;font-size:22px;font-weight:800;
+      background:#131a44;color:#e9ecff;transition:.1s}
+    .opt.correct{outline:2px solid var(--accent)}
+    .opt.wrong{outline:2px solid var(--danger)}
+    table{width:100%;margin-top:6px;border-collapse:collapse}
+    th,td{padding:10px;text-align:left}
+    th{color:#b7c1ff;font-size:12px}
+    tbody tr{background:#12183d}
+    .start-area{text-align:center;padding:28px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">ÇK</div>
+        <div>
+          <h1>Çarpan & Katlar — <span style="color:var(--accent)">Neon Sprint</span></h1>
+          <div class="sub">8. sınıf | 30 sn içinde çarpan <b>DEĞİL</b> olanı bul!</div>
+        </div>
+      </div>
+      <div class="teacher">
+        <div class="role">Matematik Öğretmeni</div>
+        <div class="name">İsa Karaturna</div>
+      </div>
+    </header>
+
+    <!-- START -->
+    <section id="startScreen" class="panel start-area">
+      <p>Hazır mısın? Doğru seçenekleri seç, süre dolmadan skorunu yap!</p>
+      <button id="btnStart" class="btn primary">▶️ Oyunu Başlat</button>
+      <button id="btnMusic" class="btn ghost">🔇 Müziği Başlat</button>
+    </section>
+
+    <!-- HUD -->
+    <section id="hud" class="grid-hud" style="display:none">
+      <div><div class="chip">Hedef Sayı</div><div id="target" class="big">—</div></div>
+      <div><div class="chip">Süre</div><div id="time" class="big">30</div></div>
+      <div><div class="chip">Skor</div><div id="score" class="big">0</div></div>
+    </section>
+
+    <!-- OPTIONS -->
+    <section id="qsec" class="panel" style="display:none">
+      <div class="chip">Hangisi <b>çarpan DEĞİL</b>?</div>
+      <div id="options" class="options"></div>
+    </section>
+
+    <!-- BOARD -->
+    <section class="panel">
+      <div class="chip">Skor Tablosu</div>
+      <table><thead><tr><th>#</th><th>Ad</th><th>Skor</th><th>Tarih</th></tr></thead><tbody id="scoreBody"></tbody></table>
+    </section>
+
+    <!-- NAME INPUT -->
+    <section id="nameAsk" class="panel" style="display:none;margin-top:14px"></section>
+  </div>
+
+  <audio id="bgmusic" preload="auto" playsinline loop>
+    <source src="https://www.dropbox.com/scl/fi/2sfq54ajzlyaywxdj2tkp/Ba-ar-Senin-Ellerinde.mp3?rlkey=mgxy3f1i5qe1n5gyhzctu1mti&dl=1" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const $=s=>document.querySelector(s); const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+    const hud=$('#hud'), qsec=$('#qsec'), targetEl=$('#target'), timeEl=$('#time'), scoreEl=$('#score');
+    const optionsEl=$('#options'), boardBody=$('#scoreBody'), nameAsk=$('#nameAsk');
+    const btnStart=$('#btnStart'), btnMusic=$('#btnMusic'), music=$('#bgmusic');
+    let score=0,timeLeft=30,timer=null,playing=false,musicOn=false;
+    const KEY='ck_scores'; const getScores=()=>JSON.parse(localStorage.getItem(KEY)||'[]'); const setScores=a=>localStorage.setItem(KEY,JSON.stringify(a));
+    const isPrime=n=>{if(n<2)return false;if(n%2===0)return n===2;for(let i=3;i<=Math.sqrt(n);i+=2)if(n%i===0)return false;return true};
+    const factorsOf=n=>{const a=[];for(let i=1;i<=n;i++)if(n%i===0)a.push(i);return a};
+    const composite=()=>{while(true){const n=rnd(4,100);if(!isPrime(n))return n}};
+    function newRound(){const N=composite();targetEl.textContent=N;const f=factorsOf(N);const chosen=new Set([1,N]);if(f.length>2)chosen.add(f[rnd(1,f.length-2)]);let non;while(true){const c=rnd(1,N);if(N%c!==0&&!chosen.has(c)){non=c;break}};const opts=[...chosen,non].map(v=>({v,bad:v===non}));for(let i=opts.length-1;i>0;i--){const j=rnd(0,i);[opts[i],opts[j]]=[opts[j],opts[i]]};renderOptions(opts)}
+    function renderOptions(o){optionsEl.innerHTML='';o.forEach(x=>{const b=document.createElement('button');b.className='opt';b.textContent=x.v;b.dataset.bad=x.bad?'1':'0';b.onclick=()=>choose(b);optionsEl.appendChild(b)})}
+    function choose(b){if(!playing)return;if(b.dataset.bad==='1'){b.classList.add('correct');score++;scoreEl.textContent=score;setTimeout(newRound,200)}else{b.classList.add('wrong');setTimeout(()=>b.classList.remove('wrong'),300)}}
+    function updateTimer(){timeEl.textContent=Math.max(0,timeLeft)}
+    function startGame(){btnStart.style.display='none';hud.style.display='grid';qsec.style.display='block';nameAsk.style.display='none';score=0;scoreEl.textContent=0;timeLeft=30;updateTimer();playing=true;clearInterval(timer);timer=setInterval(()=>{timeLeft--;updateTimer();if(timeLeft<=0)endGame()},1000);newRound()}
+    function endGame(){clearInterval(timer);playing=false;nameAsk.style.display='block';nameAsk.innerHTML=`<div>Süre doldu! Skorun: <b>${score}</b></div>
+      <input id='studentName' placeholder='Ad Soyad' style='padding:8px;border-radius:8px;margin:6px 0;width:200px'>
+      <button onclick='saveScore()' class='btn primary'>Kaydet</button>`}
+    function saveScore(){const name=document.getElementById('studentName').value||'İsimsiz';const list=getScores();list.push({name,score,ts:Date.now()});list.sort((a,b)=>b.score-a.score||a.ts-b.ts);setScores(list);renderBoard();nameAsk.innerHTML=`<div>Skor kaydedildi ✔️</div><button class='btn primary' onclick='startGame()'>▶️ Yeni Öğrenci</button>`}
+    function renderBoard(){const list=getScores();boardBody.innerHTML='';list.forEach((e,i)=>{const d=new Date(e.ts);const ds=d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});boardBody.innerHTML+=`<tr><td>${i+1}</td><td>${e.name}</td><td>${e.score}</td><td>${ds}</td></tr>`})}
+    btnStart.onclick=startGame;
+    btnMusic.onclick=async()=>{if(!musicOn){music.volume=1.0;await music.play();musicOn=true;btnMusic.textContent='🔈 Müziği Durdur'}else{music.pause();musicOn=false;btnMusic.textContent='🔇 Müziği Başlat'}};
+    renderBoard();
+  </script>
+</body>
+</html>
